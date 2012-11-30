@@ -104,5 +104,5 @@ Response
 SESSIONID=2637ECB911D0C233F18BF045D4ABE67C will be used for all the 
 following HTTP requests.
 
-To understand how to cookie to set up session, refer to 
+To understand how to use cookie to set up session, refer to 
 http://tools.ietf.org/html/rfc2965.
