@@ -1,6 +1,108 @@
-Uncomment the following text in tomcat-users.xml:
+Introduction
+============
+This project how to do form-based login with Tomcat.
+
+Env
+===
+ - Eclipse JEE Indigo SR 2
+ - Tomcat 6
+ - MySQL 5.5.28
+
+Form-base Login
+===============
+Refer to http://docs.oracle.com/javaee/6/tutorial/doc/gkbaa.html
+
+Tomcat Realm Configuration
+==========================
+Refer to http://tomcat.apache.org/tomcat-6.0-doc/realm-howto.html.  
+This project will use UserDatabaseRealm and JDBCRealm. Remember to 
+restart Tomcat server after switching realm configuration.
+
+UserDatabaseRealm Configuration
+-------------------------------
+Uncomment the following text in Tomcat's tomcat-users.xml and change 
+password for tomcat user to passw0rd:
   <role rolename="tomcat"/>
   <role rolename="role1"/>
-  <user username="tomcat" password="tomcat" roles="tomcat"/>
+  <user username="tomcat" password="passw0rd" roles="tomcat"/>
   <user username="both" password="tomcat" roles="tomcat,role1"/>
   <user username="role1" password="tomcat" roles="role1"/>
+
+JDBCRealm
+---------
+Comment the entry for UserDatabaseRealm in tomcat's server.xml and 
+the following text:
+  <Realm className="org.apache.catalina.realm.JDBCRealm" 
+         connectionURL="jdbc:mysql://localhost/weblogin?user=root&amp;password=passw0rd" 
+         debug="99" driverName="com.mysql.jdbc.Driver" 
+         roleNameCol="group_" 
+         userCredCol="pass" 
+         userNameCol="login" 
+         userRoleTable="groups" userTable="users"/>
+
+Run the following sql script against MySQL:
+  create database weblogin;
+  use weblogin;
+
+  create table users (
+     login varchar (15) not null,
+     pass varchar (15) not null,
+     primary key (login)
+  );
+
+  create table groups (
+     login varchar (15) not null,
+     group_ varchar (15) not null,
+     primary key (login, group_)
+  );
+
+  insert into users values('jingguo', 'passw0rd');
+  insert into groups values('jingguo', 'tomcat');
+
+Running
+=======
+Here are steps with UserDatabaseRealm:
+ - Start Tomcat
+ - Go to http://localhost:8080/form_based_login/test in browser.
+ - Input tomcat for Name and tomcat for Passowrd. Click GO. The 
+   browser will go to 
+   http://localhost:8080/form_based_login/j_security_check and shows
+     Sorry, login failed!
+ - Go to http://localhost:8080/form_based_login/test in browser.
+ - Input tomcat for Name and passw0rd for Passowrd. Click GO.  
+   TestServlet will be invoked.
+ - Go to http://localhost:8080/form_based_login/index.html.  
+   index.html will show up.
+Steps with JDBCRealm are similar. Just remember to use user name in 
+JDBCRealm.
+
+Cookie Analysis
+===============
+Use Chrome Developer Tools to track HTTP traffic. Here one example:
+
+Chrome                                      Tomcat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+GET request for /form_based_login/test
+---------------------------------------------------------->
+Response
+  Set-Cookie:JSESSIONID=1A1C337815EF5481E46A9F93BE387516
+<----------------------------------------------------------
+
+POST request for /form_based_login/j_security_check
+  Cookie: JSESSIONID=1A1C337815EF5481E46A9F93BE387516
+---------------------------------------------------------->
+Response (status 302)
+  Location: /form_based_login/test
+<----------------------------------------------------------
+
+GET request for /form_based_login/test
+---------------------------------------------------------->
+Response
+  Set-Cookie:SESSIONID=2637ECB911D0C233F18BF045D4ABE67C
+<----------------------------------------------------------
+
+SESSIONID=2637ECB911D0C233F18BF045D4ABE67C will be used for all the 
+following HTTP requests.
+
+To understand how to cookie to set up session, refer to 
+http://tools.ietf.org/html/rfc2965.
