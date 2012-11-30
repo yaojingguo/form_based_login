@@ -40,6 +40,9 @@ the following text:
          userNameCol="login" 
          userRoleTable="groups" userTable="users"/>
 
+Place MySQL JDBC connector library (mysql-connector-java-5.1.16.jar 
+in my case) in Tomcat's lib directory.
+
 Run the following sql script against MySQL:
   create database weblogin;
   use weblogin;
